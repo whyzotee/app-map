@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/svg.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
 import 'package:geolocator/geolocator.dart';
@@ -130,17 +131,25 @@ class _MapPageState extends State<MapPage> {
   @override
   Widget build(BuildContext context) {
     var mapProvider = context.read<MapProvider>();
-    var screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
-        backgroundColor:Colors.white,
+        backgroundColor: Colors.white,
         automaticallyImplyLeading: false,
-        title: const Text('ยืนยันตำแหน่งที่อยู่',style: TextStyle(color: Colors.black),),
+        title: const Text(
+          'ยืนยันตำแหน่งที่อยู่',
+          style: TextStyle(color: Colors.black),
+        ),
         actions: [
-          TextButton(onPressed: (){
-            mapProvider.centerMap = null;
-            Navigator.of(context).pop();
-          }, child: const Text('เอาไว้ก่อน',style:TextStyle(color:Color(0xFFFF4201),fontSize: 16 ),),)
+          TextButton(
+            onPressed: () {
+              mapProvider.centerMap = null;
+              Navigator.of(context).pop();
+            },
+            child: const Text(
+              'เอาไว้ก่อน',
+              style: TextStyle(color: Color(0xFFFF4201), fontSize: 16),
+            ),
+          )
         ],
         centerTitle: false,
       ),
@@ -148,219 +157,144 @@ class _MapPageState extends State<MapPage> {
         child: Column(
           children: [
             Expanded(
-              child: Stack(children:[
-                mapWidget(),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: GestureDetector(
-                    onTap: (){
-                      _mapController.move(
-                        mapProvider.selfPosition!,18
-                      );
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(5),
-                      margin: const EdgeInsets.only(bottom: 10,right: 10),
-                      decoration: BoxDecoration(
-                        color:Colors.white,
-                        borderRadius: BorderRadius.circular(10.0),
-                        border: Border.all(color: Colors.grey),
-                      ), child: const Icon(Icons.add_location_alt_outlined),),
+              child: Stack(
+                children: [
+                  mapWidget(),
+                  Align(
+                    alignment: Alignment.bottomRight,
+                    child: GestureDetector(
+                      onTap: () {
+                        _mapController.move(mapProvider.selfPosition!, 18);
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(5),
+                        margin: const EdgeInsets.only(bottom: 10, right: 10),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(10.0),
+                          border: Border.all(color: Colors.grey),
+                        ),
+                        child: const Icon(Icons.add_location_alt_outlined),
+                      ),
+                    ),
                   ),
-                ),
-                Consumer(
-                builder: (BuildContext context, MapProvider value, Widget? child) {
-                  return value.centerMap != null
-                      ? Container(
-                          alignment:Alignment.topCenter,
-                          child: Text(
-                            'Latitude: ${value.centerMap!.latitude}\nLongitude: ${value.centerMap!.longitude}',
-                            textAlign: TextAlign.center,
-                          ),
-                        )
-                      : Container();
-                },
+                  Consumer(
+                    builder: (BuildContext context, MapProvider value,
+                        Widget? child) {
+                      return value.centerMap != null
+                          ? Container(
+                              alignment: Alignment.topCenter,
+                              child: Text(
+                                'Latitude: ${value.centerMap!.latitude}\nLongitude: ${value.centerMap!.longitude}',
+                                textAlign: TextAlign.center,
+                              ),
+                            )
+                          : Container();
+                    },
+                  ),
+                ],
               ),
-              ],),
             ),
             Container(
               padding: const EdgeInsets.all(15),
-              child: Column(children: [
-                Row(
-                  children: [
+              child: Column(
+                children: [
+                  Row(children: [
                     Expanded(
                       child: SizedBox(
                         height: 40,
                         width: double.infinity,
                         child: TextField(
-                        decoration:  InputDecoration(
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10.0),
-                            borderSide: BorderSide.none
+                          controller: textController,
+                          decoration: InputDecoration(
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(10.0),
+                              borderSide: BorderSide.none,
+                            ),
+                            contentPadding: const EdgeInsets.only(bottom: 0),
+                            fillColor: Colors.grey[200],
+                            filled: true,
+                            prefixIcon: const Icon(
+                              Icons.search,
+                              color: Color(0xFFFF4201),
+                            ),
                           ),
-                          contentPadding: const EdgeInsets.only(bottom: 0),
-                          fillColor: Colors.grey[200],
-                          filled: true,
-                          prefixIcon: Icon(Icons.search,color: Color(0xFFFF4201),),
                         ),
-                      ),),
+                      ),
                     ),
                     const SizedBox(width: 10),
-                    ElevatedButton(onPressed: (){}, child: const Text('ค้นหา',style: TextStyle(color: Colors.black, fontWeight:FontWeight.w800)),style: ElevatedButton.styleFrom(backgroundColor:Colors.grey[200],))
-               ]),
-               const SizedBox(height:10),
-                Row(children: [
-                  Container(
-                    margin: const EdgeInsets.only(right:5), 
-                    padding: const EdgeInsets.all(5),
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle, 
-                      color: Colors.grey[300]
-                    ),
-                    child: const Icon(
-                      Icons.location_on_rounded,color:Color(0xFFFF4201),
-                    ),
-                  ),
-                  Text(
-                    address,
-                    style: const TextStyle(fontSize: 12),
-                  )
-                ],),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: (){
-                        mapProvider.centerMap = null;
-                        Navigator.of(context).pop();
-                      }, 
-                      child: const Text('ย้อนกลับ',
-                        style: TextStyle(
-                          color: Colors.black, 
-                          fontSize: 15, 
-                          fontWeight:FontWeight.w800,
-                        ),
-                      ),
-                    ),
                     ElevatedButton(
-                      onPressed: (){},
+                      onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor:const Color(0xFFFF4201),
-                      ), 
-                      child: const Padding(
-                        padding:EdgeInsets.symmetric(
-                          vertical: 10, 
-                          horizontal: 25,
+                        backgroundColor: Colors.grey[200],
+                      ),
+                      child: const Text(
+                        'ค้นหา',
+                        style: TextStyle(
+                          color: Colors.black,
+                          fontWeight: FontWeight.w800,
                         ),
-                        child: Text('บันทึก'),
                       ),
                     )
-                  ],
-                ),
-              ],),
+                  ]),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(right: 5),
+                        padding: const EdgeInsets.all(5),
+                        decoration: BoxDecoration(
+                            shape: BoxShape.circle, color: Colors.grey[300]),
+                        child: const Icon(
+                          Icons.location_on_rounded,
+                          color: Color(0xFFFF4201),
+                        ),
+                      ),
+                      Text(
+                        address,
+                        style: const TextStyle(fontSize: 12),
+                      )
+                    ],
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      TextButton(
+                        onPressed: () {
+                          mapProvider.centerMap = null;
+                          Navigator.of(context).pop();
+                        },
+                        child: const Text(
+                          'ย้อนกลับ',
+                          style: TextStyle(
+                            color: Colors.black,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          mapProvider.centerMap = null;
+                          final LatLng center = _mapController.center;
+                          Navigator.pop(context, center);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFFF4201),
+                        ),
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: 10,
+                            horizontal: 25,
+                          ),
+                          child: Text('บันทึก'),
+                        ),
+                      )
+                    ],
+                  ),
+                ],
+              ),
             )
-            
-            // Consumer(
-            //   builder: (BuildContext context, MapProvider value, Widget? child) {
-            //     return Column(
-            //       mainAxisAlignment: MainAxisAlignment.end,
-            //       children: [
-            //         Row(
-            //           mainAxisAlignment: MainAxisAlignment.center,
-            //           children: [
-            //             Container(
-            //               color: Colors.white,
-            //               width: screenSize.width * 0.5,
-            //               child: TextField(
-            //                 controller: textController,
-            //                 onChanged: ((String value) async {}),
-            //                 decoration: const InputDecoration(
-            //                   border: OutlineInputBorder(),
-            //                   labelText: 'รหัสไปรษณีย์',
-            //                 ),
-            //               ),
-            //             ),
-            //             GestureDetector(
-            //               onTap: () {
-            //                 String zipcode = textController.text;
-            //                 if (zipcode.length != 5) return;
-            //                 createAlbum(zipcode).then((value) {
-            //                   if (value["data"] != null) {
-            //                     showDistrict(value["data"]).then((index) {
-            //                       int formatI = int.parse(index);
-            //                       _mapController.move(
-            //                         LatLng(
-            //                           value["data"][formatI]["lat"],
-            //                           value["data"][formatI]["long"],
-            //                         ),
-            //                         18,
-            //                       );
-            //                     });
-            //                   }
-            //                 });
-            //               },
-            //               child: Container(
-            //                 margin: const EdgeInsets.only(left: 20),
-            //                 padding: const EdgeInsets.all(15),
-            //                 decoration: BoxDecoration(
-            //                   color: Colors.red,
-            //                   borderRadius: BorderRadius.circular(10),
-            //                 ),
-            //                 child: const Text(
-            //                   'ค้นหา',
-            //                   style: TextStyle(color: Colors.white),
-            //                 ),
-            //               ),
-            //             )
-            //           ],
-            //         ),
-            //         Row(
-            //           mainAxisAlignment: MainAxisAlignment.center,
-            //           children: [
-            //             Container(
-            //               alignment: Alignment.center,
-            //               margin: const EdgeInsets.only(top: 50, bottom: 50),
-            //               child: ElevatedButton(
-            //                 onPressed: () {
-            //                   mapProvider.centerMap = null;
-            //                   final LatLng center = _mapController.center;
-            //                   Navigator.pop(context, center);
-            //                 },
-            //                 child: const Padding(
-            //                   padding: EdgeInsets.all(20),
-            //                   child: Icon(
-            //                     Icons.location_on_rounded,
-            //                     size: 30,
-            //                   ),
-            //                 ),
-            //               ),
-            //             ),
-            //             const SizedBox(width: 20),
-            //             Container(
-            //               alignment: Alignment.center,
-            //               margin: const EdgeInsets.only(top: 50, bottom: 50),
-            //               child: ElevatedButton(
-            //                 onPressed: () {
-            //                   _mapController.move(
-            //                     mapProvider.selfPosition!,
-            //                     18,
-            //                   );
-            //                 },
-            //                 child: const Padding(
-            //                   padding: EdgeInsets.all(20),
-            //                   child: Icon(
-            //                     Icons.person_pin_circle_rounded,
-            //                     size: 30,
-            //                   ),
-            //                 ),
-            //               ),
-            //             )
-            //           ],
-            //         )
-            //       ],
-            //     );
-            //   },
-            // )
           ],
         ),
       ),
@@ -396,37 +330,43 @@ class _MapPageState extends State<MapPage> {
             return MarkerLayer(
               rotate: true,
               markers: [
+                // ตัวเช็คตรงกลางของ Lat Lng
+                //  if (value.selfPosition != null)
+                //   Marker(
+                //     point: value.selfPosition!,
+                //     builder: ((context) {
+                //       return Icon(
+                //         Icons.circle,
+                //         size: 5,
+                //       );
+                //     }),
+                //   ),
                 if (value.selfPosition != null)
                   Marker(
                     point: value.selfPosition!,
                     builder: ((context) {
-                      return Align(
-                        alignment: Alignment.center,
-                        child: Container(
-                          alignment: Alignment.center,
-                          height: 150,
-                          width: 150,
-                          child: Stack(
-                            alignment: AlignmentDirectional.center,
-                            children: [
-                               Icon(
-                                  Icons.circle,
-                                  color: Colors.blue.withOpacity(0.3),
-                                  size: 150,
-                                ),
-                              Icon(
-                                  Icons.circle,
-                                  color: Colors.white,
-                                  size: 30,
-                                ),
-                              Icon(
-                                  Icons.circle,
-                                  color: Colors.lightBlue,
-                                  size: 20,
-                                ),
-                            ],
+                      return Stack(
+                        alignment: AlignmentDirectional.center,
+                        children: [
+                          FractionalTranslation(
+                            translation: const Offset(-2, -2),
+                            child: Icon(
+                              Icons.circle,
+                              color: Colors.blue.withOpacity(0.2),
+                              size: 150,
+                            ),
                           ),
-                        ),
+                          const Icon(
+                            Icons.circle,
+                            color: Colors.white,
+                            size: 30,
+                          ),
+                          const Icon(
+                            Icons.circle,
+                            color: Colors.lightBlue,
+                            size: 20,
+                          ),
+                        ],
                       );
                     }),
                   ),
@@ -434,10 +374,11 @@ class _MapPageState extends State<MapPage> {
                   point: value.centerMap ?? centerMap,
                   anchorPos: AnchorPos.align(AnchorAlign.top),
                   builder: ((context) {
-                    return const Icon(
-                      Icons.location_on_sharp,
-                      color: Colors.red,
-                      size: 40,
+                    return SvgPicture.asset(
+                      'assets/images/marker.svg',
+                      height: 60,
+                      width: 60,
+                      fit: BoxFit.cover,
                     );
                   }),
                 ),

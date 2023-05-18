@@ -45,7 +45,7 @@ class _MarkMapPageState extends State<MarkMapPage> {
           if (userMark != null) Text('Your Select Position\n$userMark'),
           if (userMark != null)
             Container(
-              height: 600,
+              height: 400,
               width: 800,
               margin: const EdgeInsets.only(top: 50),
               child: FlutterMap(

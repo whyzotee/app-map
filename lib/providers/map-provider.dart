@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 class MapProvider extends ChangeNotifier {
   LatLng? centerMap;
+  LatLng? selfPosition;
 
-  void updateMarkerPosition(MapPosition value) {
-    centerMap = value.center;
+  void updateMarkerPosition(LatLng value) {
+    centerMap = value;
+    notifyListeners();
+  }
+
+  void updateSelfPosition(LatLng value) {
+    selfPosition = value;
     notifyListeners();
   }
 }

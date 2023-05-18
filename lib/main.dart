@@ -1,11 +1,10 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:provider/provider.dart';
+import 'package:http/http.dart' as http;
 
-import 'map.dart';
+import 'markmap.dart';
 import 'providers/map-provider.dart';
 
 void main() {
@@ -36,85 +35,100 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  MapController mapController = MapController();
-  LatLng? userMark;
+  TextEditingController subDistrictInput = TextEditingController();
+  TextEditingController districtInput = TextEditingController();
+  TextEditingController countyInput = TextEditingController();
+  TextEditingController zipCodeInput = TextEditingController();
 
-  Future<void> pushToMap() async {
-    final result = await Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => const MapPage()),
+  String latLngfromAPI = '';
+
+  Future fetchLatLngFromOSM() async {
+    final String subDistrict = 'city=${subDistrictInput.text}';
+    final String district = 'county=${districtInput.text}';
+    final String county = 'state=${countyInput.text}';
+    final String zipCode = 'postalcode=${zipCodeInput.text}';
+
+    const String osmURL = 'https://nominatim.openstreetmap.org/?';
+
+    final response = await http.get(
+      Uri.parse(
+        '$osmURL&country=ประเทศไทย&$zipCode&format=json&limit=1',
+      ),
     );
 
-    if (!mounted || result == null) return;
-
-    log(result.toString());
-    if (userMark != null) {
-      mapController.move(result!, 18);
+    if (response.statusCode == 200) {
+      print(response.body.toString());
+      setState(() {
+        latLngfromAPI = response.body.toString();
+      });
+      return true;
+    } else {
+      return false;
     }
-
-    setState(() {
-      userMark = result;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (userMark != null) Text('Your Select Position\n$userMark'),
-          if (userMark != null)
-            Container(
-              height: 600,
-              width: 800,
-              margin: const EdgeInsets.only(top: 50),
-              child: FlutterMap(
-                mapController: mapController,
-                options: MapOptions(
-                  center: userMark,
-                  zoom: 18,
-                  interactiveFlags: InteractiveFlag.none,
+    return SafeArea(
+      child: Scaffold(
+        body: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: <Widget>[
+            Text(latLngfromAPI),
+            TextField(
+              controller: subDistrictInput,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'ตำบล',
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: districtInput,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'อำเภอ',
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: countyInput,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'จังหวัด',
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextField(
+              controller: zipCodeInput,
+              decoration: const InputDecoration(
+                border: OutlineInputBorder(),
+                labelText: 'รหัสไปรษณีย์',
+              ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton(
+                  onPressed: fetchLatLngFromOSM,
+                  child: const Text('get LatLng'),
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    subdomains: const ['a', 'b', 'c'],
-                    userAgentPackageName: 'com.example.app',
-                  ),
-                  MarkerLayer(
-                    rotate: true,
-                    markers: [
-                      Marker(
-                        point: userMark!,
-                        anchorPos: AnchorPos.align(AnchorAlign.top),
-                        builder: ((context) {
-                          return const Icon(
-                            Icons.person_pin_circle_rounded,
-                            color: Colors.orange,
-                            size: 40,
-                          );
-                        }),
+                const SizedBox(width: 20),
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const MarkMapPage(),
                       ),
-                    ],
-                  )
-                ],
-              ),
-            ),
-          Container(
-            alignment: Alignment.center,
-            margin: const EdgeInsets.only(top: 50),
-            child: ElevatedButton(
-              onPressed: () => pushToMap(),
-              child: const Text(
-                'Mark จุด',
-                style: TextStyle(fontSize: 20),
-              ),
-            ),
-          ),
-        ],
+                    );
+                  },
+                  child: const Text('mark Map'),
+                )
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

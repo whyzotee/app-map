@@ -19,8 +19,8 @@ class MapPage extends StatefulWidget {
 
 class _MapPageState extends State<MapPage> {
   final _mapController = MapController();
+  final centerMap = LatLng(18.75685320973088, 99.00227259388569);
   TextEditingController textController = TextEditingController();
-  Map selfPosition = {};
 
   Future<Position> _determinePosition() async {
     bool serviceEnabled;
@@ -122,15 +122,13 @@ class _MapPageState extends State<MapPage> {
     super.initState();
     var mapProvider = context.read<MapProvider>();
     _determinePosition().then((value) {
-      mapProvider.centerMap = null;
-      setState(() {
-        selfPosition.addAll({"lat": value.latitude, "lng": value.longitude});
-      });
+      mapProvider.selfPosition = LatLng(value.latitude, value.longitude);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    var mapProvider = context.read<MapProvider>();
     var screenSize = MediaQuery.of(context).size;
     return Scaffold(
       appBar: AppBar(
@@ -139,7 +137,7 @@ class _MapPageState extends State<MapPage> {
       ),
       body: Stack(
         children: [
-          selfPosition.isNotEmpty ? mapWidget() : Container(),
+          mapWidget(),
           Consumer(
             builder: (BuildContext context, MapProvider value, Widget? child) {
               return value.centerMap != null
@@ -148,82 +146,112 @@ class _MapPageState extends State<MapPage> {
                       child: Text(
                         'Latitude: ${value.centerMap!.latitude}\nLongitude: ${value.centerMap!.longitude}',
                         textAlign: TextAlign.center,
-                      ))
+                      ),
+                    )
                   : Container();
             },
           ),
-          if (selfPosition.isNotEmpty)
-            Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      color: Colors.white,
-                      width: screenSize.width * 0.5,
-                      child: TextField(
-                        controller: textController,
-                        onChanged: ((String value) async {}),
-                        decoration: const InputDecoration(
-                          border: OutlineInputBorder(),
-                          labelText: 'รหัสไปรษณีย์',
+          Consumer(
+            builder: (BuildContext context, MapProvider value, Widget? child) {
+              return Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        color: Colors.white,
+                        width: screenSize.width * 0.5,
+                        child: TextField(
+                          controller: textController,
+                          onChanged: ((String value) async {}),
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: 'รหัสไปรษณีย์',
+                          ),
                         ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        String zipcode = textController.text;
-                        if (zipcode.length != 5) return;
-                        createAlbum(zipcode).then((value) {
-                          if (value["data"] != null) {
-                            showDistrict(value["data"]).then((index) {
-                              int formatI = int.parse(index);
-                              _mapController.move(
-                                LatLng(
-                                  value["data"][formatI]["lat"],
-                                  value["data"][formatI]["long"],
-                                ),
-                                18,
-                              );
-                            });
-                          }
-                        });
-                      },
-                      child: Container(
-                        margin: const EdgeInsets.only(left: 20),
-                        padding: const EdgeInsets.all(15),
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(10),
+                      GestureDetector(
+                        onTap: () {
+                          String zipcode = textController.text;
+                          if (zipcode.length != 5) return;
+                          createAlbum(zipcode).then((value) {
+                            if (value["data"] != null) {
+                              showDistrict(value["data"]).then((index) {
+                                int formatI = int.parse(index);
+                                _mapController.move(
+                                  LatLng(
+                                    value["data"][formatI]["lat"],
+                                    value["data"][formatI]["long"],
+                                  ),
+                                  18,
+                                );
+                              });
+                            }
+                          });
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(left: 20),
+                          padding: const EdgeInsets.all(15),
+                          decoration: BoxDecoration(
+                            color: Colors.red,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            'ค้นหา',
+                            style: TextStyle(color: Colors.white),
+                          ),
                         ),
-                        child: const Text(
-                          'ค้นหา',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    )
-                  ],
-                ),
-                Container(
-                  alignment: Alignment.center,
-                  margin: const EdgeInsets.only(top: 50, bottom: 50),
-                  child: ElevatedButton(
-                    onPressed: () {
-                      final LatLng center = _mapController.center;
-                      Navigator.pop(context, center);
-                    },
-                    child: const Padding(
-                      padding: EdgeInsets.all(20),
-                      child: Icon(
-                        Icons.location_on_rounded,
-                        size: 30,
-                      ),
-                    ),
+                      )
+                    ],
                   ),
-                )
-              ],
-            )
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.only(top: 50, bottom: 50),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            mapProvider.centerMap = null;
+                            final LatLng center = _mapController.center;
+                            Navigator.pop(context, center);
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Icon(
+                              Icons.location_on_rounded,
+                              size: 30,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 20),
+                      Container(
+                        alignment: Alignment.center,
+                        margin: const EdgeInsets.only(top: 50, bottom: 50),
+                        child: ElevatedButton(
+                          onPressed: () {
+                            _mapController.move(
+                              mapProvider.selfPosition!,
+                              18,
+                            );
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(20),
+                            child: Icon(
+                              Icons.person_pin_circle_rounded,
+                              size: 30,
+                            ),
+                          ),
+                        ),
+                      )
+                    ],
+                  )
+                ],
+              );
+            },
+          )
         ],
       ),
     );
@@ -235,15 +263,12 @@ class _MapPageState extends State<MapPage> {
       mapController: _mapController,
       options: MapOptions(
         interactiveFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-        center: LatLng(
-          selfPosition["lat"],
-          selfPosition["lng"],
-        ),
+        center: LatLng(18.75685320973088, 99.00227259388569),
         zoom: 18,
         minZoom: 18,
         maxZoom: 18,
         onPositionChanged: (position, hasGesture) {
-          mapProvider.updateMarkerPosition(position);
+          mapProvider.updateMarkerPosition(position.center!);
         },
       ),
       children: [
@@ -261,26 +286,19 @@ class _MapPageState extends State<MapPage> {
             return MarkerLayer(
               rotate: true,
               markers: [
-                Marker(
-                  point: LatLng(
-                    selfPosition["lat"],
-                    selfPosition["lng"],
+                if (value.selfPosition != null)
+                  Marker(
+                    point: value.selfPosition!,
+                    builder: ((context) {
+                      return const Icon(
+                        Icons.account_circle_rounded,
+                        color: Colors.lightBlue,
+                        size: 40,
+                      );
+                    }),
                   ),
-                  builder: ((context) {
-                    return const Icon(
-                      Icons.account_circle_rounded,
-                      color: Colors.lightBlue,
-                      size: 40,
-                    );
-                  }),
-                ),
                 Marker(
-                  point: value.centerMap != null
-                      ? value.centerMap!
-                      : LatLng(
-                          selfPosition["lat"],
-                          selfPosition["lng"],
-                        ),
+                  point: value.centerMap ?? centerMap,
                   anchorPos: AnchorPos.align(AnchorAlign.top),
                   builder: ((context) {
                     return const Icon(

@@ -168,7 +168,9 @@ class _MapPageState extends State<MapPage> {
     var mapProvider = context.read<MapProvider>();
     return Consumer(
         builder: (BuildContext context, MapProvider value, Widget? child) {
-      if (value.selfPosition == null) return Container();
+      if (value.selfPosition == null || value.centerMap == null) {
+        return Container();
+      }
       return Stack(
         children: [
           mapWidget(),
@@ -239,17 +241,6 @@ class _MapPageState extends State<MapPage> {
             return MarkerLayer(
               rotate: true,
               markers: [
-                // ตัวเช็คตรงกลางของ Lat Lng
-                //  if (value.selfPosition != null)
-                //   Marker(
-                //     point: value.selfPosition!,
-                //     builder: ((context) {
-                //       return Icon(
-                //         Icons.circle,
-                //         size: 5,
-                //       );
-                //     }),
-                //   ),
                 if (value.selfPosition != null)
                   Marker(
                     point: value.selfPosition!,
@@ -334,6 +325,7 @@ class _MapPageState extends State<MapPage> {
               onPressed: () {},
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.grey[200],
+                side: const BorderSide(color: Colors.grey),
               ),
               child: const Text(
                 'ค้นหา',
@@ -351,7 +343,7 @@ class _MapPageState extends State<MapPage> {
                 margin: const EdgeInsets.only(right: 5),
                 padding: const EdgeInsets.all(5),
                 decoration: BoxDecoration(
-                    shape: BoxShape.circle, color: Colors.grey[300]),
+                    shape: BoxShape.circle, color: Colors.grey[200]),
                 child: const Icon(
                   Icons.location_on_rounded,
                   color: Color(0xFFFF4201),

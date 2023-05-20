@@ -21,7 +21,6 @@ class _MapPageState extends State<MapPage> {
   final String address = 'ต.สุเทพ อำเภอเมืองเชียงใหม่ จังหวัดเชียงใหม่ 50200';
 
   final _mapController = MapController();
-  final centerMap = LatLng(18.75685320973088, 99.00227259388569);
   TextEditingController textController = TextEditingController();
 
   Future<Position> _determinePosition() async {
@@ -124,181 +123,83 @@ class _MapPageState extends State<MapPage> {
     super.initState();
     var mapProvider = context.read<MapProvider>();
     _determinePosition().then((value) {
-      mapProvider.selfPosition = LatLng(value.latitude, value.longitude);
+      mapProvider.updateSelfPosition(LatLng(value.latitude, value.longitude));
+      mapProvider.updateMarkerPosition(LatLng(value.latitude, value.longitude));
     });
   }
 
   @override
   Widget build(BuildContext context) {
     var mapProvider = context.read<MapProvider>();
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        automaticallyImplyLeading: false,
-        title: const Text(
-          'ยืนยันตำแหน่งที่อยู่',
-          style: TextStyle(color: Colors.black),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              mapProvider.centerMap = null;
-              Navigator.of(context).pop();
-            },
-            child: const Text(
-              'เอาไว้ก่อน',
-              style: TextStyle(color: Color(0xFFFF4201), fontSize: 16),
-            ),
-          )
-        ],
-        centerTitle: false,
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              child: Stack(
-                children: [
-                  mapWidget(),
-                  Align(
-                    alignment: Alignment.bottomRight,
-                    child: GestureDetector(
-                      onTap: () {
-                        _mapController.move(mapProvider.selfPosition!, 18);
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(5),
-                        margin: const EdgeInsets.only(bottom: 10, right: 10),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10.0),
-                          border: Border.all(color: Colors.grey),
-                        ),
-                        child: const Icon(Icons.add_location_alt_outlined),
-                      ),
-                    ),
-                  ),
-                  Consumer(
-                    builder: (BuildContext context, MapProvider value,
-                        Widget? child) {
-                      return value.centerMap != null
-                          ? Container(
-                              alignment: Alignment.topCenter,
-                              child: Text(
-                                'Latitude: ${value.centerMap!.latitude}\nLongitude: ${value.centerMap!.longitude}',
-                                textAlign: TextAlign.center,
-                              ),
-                            )
-                          : Container();
-                    },
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(15),
-              child: Column(
-                children: [
-                  Row(children: [
-                    Expanded(
-                      child: SizedBox(
-                        height: 40,
-                        width: double.infinity,
-                        child: TextField(
-                          controller: textController,
-                          decoration: InputDecoration(
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(10.0),
-                              borderSide: BorderSide.none,
-                            ),
-                            contentPadding: const EdgeInsets.only(bottom: 0),
-                            fillColor: Colors.grey[200],
-                            filled: true,
-                            prefixIcon: const Icon(
-                              Icons.search,
-                              color: Color(0xFFFF4201),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[200],
-                      ),
-                      child: const Text(
-                        'ค้นหา',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    )
-                  ]),
-                  const SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Container(
-                        margin: const EdgeInsets.only(right: 5),
-                        padding: const EdgeInsets.all(5),
-                        decoration: BoxDecoration(
-                            shape: BoxShape.circle, color: Colors.grey[300]),
-                        child: const Icon(
-                          Icons.location_on_rounded,
-                          color: Color(0xFFFF4201),
-                        ),
-                      ),
-                      Text(
-                        address,
-                        style: const TextStyle(fontSize: 12),
-                      )
-                    ],
-                  ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      TextButton(
-                        onPressed: () {
-                          mapProvider.centerMap = null;
-                          Navigator.of(context).pop();
-                        },
-                        child: const Text(
-                          'ย้อนกลับ',
-                          style: TextStyle(
-                            color: Colors.black,
-                            fontSize: 15,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          mapProvider.centerMap = null;
-                          final LatLng center = _mapController.center;
-                          Navigator.pop(context, center);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFFFF4201),
-                        ),
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(
-                            vertical: 10,
-                            horizontal: 25,
-                          ),
-                          child: Text('บันทึก'),
-                        ),
-                      )
-                    ],
-                  ),
-                ],
+    return GestureDetector(
+      onTap: () => FocusScope.of(context).unfocus(),
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.white,
+          automaticallyImplyLeading: false,
+          title: const Text(
+            'ยืนยันตำแหน่งที่อยู่',
+            style: TextStyle(color: Colors.black),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                mapProvider.centerMap = null;
+                Navigator.of(context).pop();
+              },
+              child: const Text(
+                'เอาไว้ก่อน',
+                style: TextStyle(color: Color(0xFFFF4201), fontSize: 16),
               ),
             )
           ],
+          centerTitle: false,
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [Expanded(child: expandedMap()), bottomWidget()],
+          ),
         ),
       ),
     );
+  }
+
+  Widget expandedMap() {
+    var mapProvider = context.read<MapProvider>();
+    return Consumer(
+        builder: (BuildContext context, MapProvider value, Widget? child) {
+      if (value.selfPosition == null) return Container();
+      return Stack(
+        children: [
+          mapWidget(),
+          Align(
+            alignment: Alignment.bottomRight,
+            child: GestureDetector(
+              onTap: () {
+                _mapController.move(mapProvider.selfPosition!, 18);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                margin: const EdgeInsets.only(bottom: 10, right: 10),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(10.0),
+                  border: Border.all(color: Colors.grey),
+                ),
+                child: const Icon(Icons.add_location_alt_outlined),
+              ),
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(top: 20),
+            alignment: Alignment.topCenter,
+            child: Text(
+              'Latitude: ${value.centerMap!.latitude}\nLongitude: ${value.centerMap!.longitude}',
+            ),
+          )
+        ],
+      );
+    });
   }
 
   Widget mapWidget() {
@@ -307,19 +208,27 @@ class _MapPageState extends State<MapPage> {
       mapController: _mapController,
       options: MapOptions(
         interactiveFlags: InteractiveFlag.pinchZoom | InteractiveFlag.drag,
-        center: LatLng(18.75685320973088, 99.00227259388569),
+        center: mapProvider.selfPosition,
         zoom: 18,
-        minZoom: 18,
+        minZoom: 15,
         maxZoom: 18,
+        onPointerDown: (event, point) {
+          if (FocusScope.of(context).hasFocus) {
+            FocusScope.of(context).unfocus();
+          }
+        },
         onPositionChanged: (position, hasGesture) {
           mapProvider.updateMarkerPosition(position.center!);
+          if (FocusScope.of(context).hasFocus) {
+            FocusScope.of(context).unfocus();
+          }
         },
       ),
       children: [
         TileLayer(
-          minZoom: 18,
+          minZoom: 15,
           maxZoom: 18,
-          minNativeZoom: 18,
+          minNativeZoom: 15,
           maxNativeZoom: 18,
           urlTemplate: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
           subdomains: const ['a', 'b', 'c'],
@@ -370,23 +279,131 @@ class _MapPageState extends State<MapPage> {
                       );
                     }),
                   ),
-                Marker(
-                  point: value.centerMap ?? centerMap,
-                  anchorPos: AnchorPos.align(AnchorAlign.top),
-                  builder: ((context) {
-                    return SvgPicture.asset(
-                      'assets/images/marker.svg',
-                      height: 60,
-                      width: 60,
-                      fit: BoxFit.cover,
-                    );
-                  }),
-                ),
+                if (value.selfPosition != null)
+                  Marker(
+                    point: value.centerMap!,
+                    anchorPos: AnchorPos.align(AnchorAlign.top),
+                    builder: ((context) {
+                      return SvgPicture.asset(
+                        'assets/images/marker.svg',
+                        height: 60,
+                        width: 60,
+                        fit: BoxFit.cover,
+                      );
+                    }),
+                  ),
               ],
             );
           },
         )
       ],
+    );
+  }
+
+  Widget bottomWidget() {
+    var mapProvider = context.read<MapProvider>();
+    return Container(
+      padding: const EdgeInsets.all(15),
+      child: Column(
+        children: [
+          Row(children: [
+            Expanded(
+              child: SizedBox(
+                height: 40,
+                width: double.infinity,
+                child: TextField(
+                  controller: textController,
+                  decoration: InputDecoration(
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10.0),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.only(bottom: 0),
+                    fillColor: Colors.grey[200],
+                    filled: true,
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFFFF4201),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            ElevatedButton(
+              onPressed: () {},
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.grey[200],
+              ),
+              child: const Text(
+                'ค้นหา',
+                style: TextStyle(
+                  color: Colors.black,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            )
+          ]),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Container(
+                margin: const EdgeInsets.only(right: 5),
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                    shape: BoxShape.circle, color: Colors.grey[300]),
+                child: const Icon(
+                  Icons.location_on_rounded,
+                  color: Color(0xFFFF4201),
+                ),
+              ),
+              Expanded(
+                child: Text(
+                  address,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              )
+            ],
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              TextButton(
+                onPressed: () {
+                  mapProvider.centerMap = null;
+                  Navigator.of(context).pop();
+                },
+                child: const Text(
+                  'ย้อนกลับ',
+                  style: TextStyle(
+                    color: Colors.black,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  mapProvider.centerMap = null;
+                  final LatLng center = _mapController.center;
+                  Navigator.pop(context, center);
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFFF4201),
+                ),
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(
+                    vertical: 10,
+                    horizontal: 25,
+                  ),
+                  child: Text('บันทึก'),
+                ),
+              )
+            ],
+          ),
+        ],
+      ),
     );
   }
 }
